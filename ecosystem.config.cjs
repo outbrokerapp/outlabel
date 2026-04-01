@@ -1,0 +1,33 @@
+name: Deploy Outlabel
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: outlabel-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            set -e
+            cd /home/outlabel/outlabel-app
+            git fetch origin main
+            git reset --hard origin/main
+            npm ci
+            npm run build
+            pm2 startOrReload ecosystem.config.cjs --update-env
+            pm2 save
