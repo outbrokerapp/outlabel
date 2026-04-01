@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: deploy-production
+  group: outlabel-production
   cancel-in-progress: true
 
 jobs:
@@ -20,17 +20,14 @@ jobs:
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
             set -e
             cd /home/outlabel/outlabel-app
-
-            git fetch --all
+            git fetch origin main
             git reset --hard origin/main
-
             npm ci
             npm run build
-
-            pm2 startOrReload ecosystem.config.js --update-env
+            pm2 startOrReload ecosystem.config.cjs --update-env
             pm2 save
